@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>Unraid-Next-Dashboard</Name>
+  <Repository>ghcr.io/michaelgubert-ai/unraid-next-dashboard:latest</Repository>
+  <Registry>https://github.com/michaelgubert-ai/unraid-next-dashboard/pkgs/container/unraid-next-dashboard</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/michaelgubert-ai/unraid-next-dashboard/issues</Support>
+  <Project>https://github.com/michaelgubert-ai/unraid-next-dashboard</Project>
+  <Overview>
+    A radical reimagining of the Unraid WebGUI &#x2014; Minimalist, Atmospheric, and Human-Centric.
+    Features:
+    - Serene mountain and drifting fog backdrop (Antoine Barr&#xE8;s &amp; CodePen animation).
+    - Centered ergonomic workstation (zero vertical scrolling at 1080p).
+    - Orange Glass Storage Hero Card with live free space breakdown and NVMe tier.
+    - 3&#xD7; more compact circular telemetry widgets (CPU, RAM, Net, GPU).
+    - Real-time Docker container launcher and monitoring dock.
+    - Modern folder-based storage browser.
+  </Overview>
+  <Category>Status:Other Productivity: Tools: System: Dashboard:</Category>
+  <WebUI>http://[IP]:[PORT:3080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/michaelgubert-ai/unraid-next-dashboard/main/unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/michaelgubert-ai/unraid-next-dashboard/main/prototype/public/favicon.svg</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled></DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Description>Modern, atmospheric React 19 dashboard prototype for Unraid with live Docker &amp; host telemetry.</Description>
+  
+  <Config Name="WebUI Port" Target="3080" Default="3080" Mode="tcp" Description="Port to access the Unraid Next Dashboard" Type="Port" Display="always" Required="true" Mask="false">3080</Config>
+  
+  <Config Name="Docker Socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="ro" Description="Read-only access to Docker socket to monitor running containers and launch WebUIs" Type="Path" Display="always" Required="false" Mask="false">/var/run/docker.sock</Config>
+  
+  <Config Name="Unraid System State" Target="/host/emhttp" Default="/var/local/emhttp" Mode="ro" Description="Read-only access to Unraid emhttp runtime state (var.ini, disks.ini)" Type="Path" Display="always" Required="false" Mask="false">/var/local/emhttp</Config>
+  
+  <Config Name="Host System Telemetry" Target="/host/proc" Default="/proc" Mode="ro" Description="Read-only access to host /proc for accurate CPU, memory and network metrics" Type="Path" Display="always" Required="false" Mask="false">/proc</Config>
+  
+  <Config Name="Unraid Storage Shares" Target="/host/mnt/user" Default="/mnt/user" Mode="ro" Description="Read-only access to user shares for storage pool inspection" Type="Path" Display="advanced" Required="false" Mask="false">/mnt/user</Config>
+</Container>

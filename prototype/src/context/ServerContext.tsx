@@ -18,6 +18,7 @@ export interface ToastMessage {
 
 interface ServerContextValue {
   state: ServerState;
+  isLive: boolean;
   scenario: ScenarioType;
   setScenario: (scenario: ScenarioType) => void;
   activeDrawer: DrawerState;
@@ -41,16 +42,56 @@ const ServerContext = createContext<ServerContextValue | undefined>(undefined);
 
 export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<ServerState>(mockAdapter.getState());
+  const [isLive, setIsLive] = useState(false);
   const [scenario, setScenarioState] = useState<ScenarioType>('healthy');
   const [activeDrawer, setActiveDrawer] = useState<DrawerState>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   useEffect(() => {
-    const unsubscribe = mockAdapter.subscribe((updatedState) => {
-      setState(updatedState);
-    });
-    return unsubscribe;
-  }, []);
+    let timer: number | null = null;
+    let isSubscribed = true;
+
+    async function checkAndPollApi() {
+      // If user is intentionally running a mock scenario other than healthy, keep mock
+      if (scenario !== 'healthy') {
+        setIsLive(false);
+        const unsubscribe = mockAdapter.subscribe((updatedState) => {
+          if (isSubscribed) setState(updatedState);
+        });
+        return unsubscribe;
+      }
+
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (isSubscribed) {
+            setState(data);
+            setIsLive(Boolean(data._isLive !== false));
+          }
+          timer = window.setTimeout(checkAndPollApi, 3000);
+          return;
+        }
+      } catch {
+        // Fall back to mock
+      }
+
+      if (isSubscribed) {
+        setIsLive(false);
+        const unsubscribe = mockAdapter.subscribe((updatedState) => {
+          if (isSubscribed) setState(updatedState);
+        });
+        return unsubscribe;
+      }
+    }
+
+    checkAndPollApi();
+
+    return () => {
+      isSubscribed = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [scenario]);
 
   const showToast = (message: string, type: ToastMessage['type'] = 'info') => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -80,21 +121,57 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const startApp = (appId: string) => {
+  const startApp = async (appId: string) => {
+    if (isLive) {
+      try {
+        await fetch(`/api/docker/${appId}/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start' }),
+        });
+        showToast(`Started container`, 'success');
+      } catch (err) {
+        showToast(`Failed to start container`, 'error');
+      }
+    }
     const app = mockAdapter.setAppState(appId, 'running');
     if (app) {
       showToast(`Started container "${app.name}"`, 'success');
     }
   };
 
-  const stopApp = (appId: string) => {
+  const stopApp = async (appId: string) => {
+    if (isLive) {
+      try {
+        await fetch(`/api/docker/${appId}/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'stop' }),
+        });
+        showToast(`Stopped container`, 'info');
+      } catch (err) {
+        showToast(`Failed to stop container`, 'error');
+      }
+    }
     const app = mockAdapter.setAppState(appId, 'stopped');
     if (app) {
       showToast(`Stopped container "${app.name}"`, 'info');
     }
   };
 
-  const restartApp = (appId: string) => {
+  const restartApp = async (appId: string) => {
+    if (isLive) {
+      try {
+        await fetch(`/api/docker/${appId}/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'restart' }),
+        });
+        showToast(`Restarting container...`, 'info');
+      } catch (err) {
+        showToast(`Failed to restart container`, 'error');
+      }
+    }
     mockAdapter.setAppState(appId, 'restarting');
     showToast(`Restarting container...`, 'info');
   };
@@ -133,6 +210,7 @@ export const ServerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <ServerContext.Provider
       value={{
         state,
+        isLive,
         scenario,
         setScenario,
         activeDrawer,

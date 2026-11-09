@@ -22,7 +22,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
-  const { state, scenario, setScenario, resetDemo, openDrawer } = useServer();
+  const { state, isLive, scenario, setScenario, resetDemo, openDrawer } = useServer();
   const [showActivityTray, setShowActivityTray] = useState(false);
   const trayRef = useRef<HTMLDivElement>(null);
 
@@ -72,9 +72,16 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             {state.info.hostname}
           </span>
           <span className="text-muted header-os-version" style={{ fontSize: '11px' }}>
-            v7.3.2
+            {state.info.unraidVersion || 'v7.3.2'}
           </span>
         </div>
+
+        {isLive && (
+          <Badge variant="healthy">
+            <CheckCircle2 size={10} style={{ marginRight: 2 }} />
+            Live Unraid
+          </Badge>
+        )}
 
         <Badge variant={parityVariant}>
           <Shield size={10} style={{ marginRight: 1 }} />

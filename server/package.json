@@ -1,0 +1,13 @@
+{
+  "name": "unraid-next-server",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Companion API backend for Unraid Next Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["unraid", "dashboard", "docker", "nas"],
+  "author": "michaelgubert-ai",
+  "license": "MIT"
+}

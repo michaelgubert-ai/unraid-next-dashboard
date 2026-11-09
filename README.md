@@ -106,6 +106,33 @@ npm run dev
 
 Open your browser at `http://localhost:3000` to interact with the dashboard.
 
+### 🐳 Running with Docker on Unraid
+
+#### Option A: Quick Run with Docker CLI on Unraid Terminal
+```bash
+docker run -d \
+  --name unraid-next-dashboard \
+  -p 3080:3080 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v /var/local/emhttp:/host/emhttp:ro \
+  -v /proc:/host/proc:ro \
+  --restart unless-stopped \
+  ghcr.io/michaelgubert-ai/unraid-next-dashboard:latest
+```
+Access at `http://<your-unraid-ip>:3080` (e.g. `http://10.0.0.64:3080`).
+
+#### Option B: Unraid WebGUI Docker Template
+1. Copy `unraid-template.xml` to your flash drive:  
+   `/boot/config/plugins/dockerMan/templates-user/my-unraid-next-dashboard.xml`
+2. Go to **Docker** tab in Unraid WebGUI -> Click **Add Container**.
+3. Select **Unraid-Next-Dashboard** from the template dropdown.
+4. Click **Apply**.
+
+#### Option C: Docker Compose
+```bash
+docker compose up -d
+```
+
 ### Production Build
 
 ```bash

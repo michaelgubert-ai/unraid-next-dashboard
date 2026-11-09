@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  unraid-next-dashboard:
+    image: ghcr.io/michaelgubert-ai/unraid-next-dashboard:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: unraid-next-dashboard
+    restart: unless-stopped
+    ports:
+      - "3080:3080"
+    environment:
+      - PORT=3080
+      - NODE_ENV=production
+    volumes:
+      # Access Docker socket to monitor & display running containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Unraid system state (disks.ini, var.ini)
+      - /var/local/emhttp:/host/emhttp:ro
+      # Host telemetry (CPU, RAM, Network)
+      - /proc:/host/proc:ro
+      # Host storage view (optional)
+      - /mnt/user:/host/mnt/user:ro
