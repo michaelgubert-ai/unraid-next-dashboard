@@ -49,6 +49,29 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
 
   // Navigation state: current folder path hierarchy
   const [navPath, setNavPath] = useState<ShareItem[]>([]);
+  const [liveShares, setLiveShares] = useState<ShareItem[] | null>(null);
+
+  // Fetch live shares from companion API if available
+  React.useEffect(() => {
+    let isMounted = true;
+    fetch('/api/shares')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data && Array.isArray(data.shares) && data.shares.length > 0) {
+          setLiveShares(data.shares);
+          setSelectedItem(data.shares[0]);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const rootShares = useMemo(() => {
+    return liveShares && liveShares.length > 0 ? liveShares : mockRootShares;
+  }, [liveShares]);
+
   // Selected item inside current folder
   const [selectedItem, setSelectedItem] = useState<ShareItem | null>(mockRootShares[0]);
   // View mode: 'grid' (macOS Finder icons) or 'list' (Windows Explorer details)
@@ -70,7 +93,7 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
 
   // Current items in directory
   const currentItems = useMemo(() => {
-    let items = navPath.length === 0 ? mockRootShares : navPath[navPath.length - 1].children || [];
+    let items = navPath.length === 0 ? rootShares : navPath[navPath.length - 1].children || [];
 
     // Filter by pool if at root
     if (navPath.length === 0 && activePoolFilter !== 'all') {
@@ -86,7 +109,7 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
     }
 
     return items;
-  }, [navPath, activePoolFilter, searchQuery]);
+  }, [navPath, activePoolFilter, searchQuery, rootShares]);
 
   // Navigate into folder
   const handleOpenFolder = (folder: ShareItem) => {
@@ -100,7 +123,7 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
   const handleNavigateBack = () => {
     if (navPath.length > 0) {
       setNavPath((prev) => prev.slice(0, prev.length - 1));
-      setSelectedItem(navPath.length > 1 ? navPath[navPath.length - 2] : mockRootShares[0]);
+      setSelectedItem(navPath.length > 1 ? navPath[navPath.length - 2] : rootShares[0]);
     }
   };
 
@@ -108,7 +131,7 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
   const handleNavigateToBreadcrumb = (index: number) => {
     if (index === -1) {
       setNavPath([]);
-      setSelectedItem(mockRootShares[0]);
+      setSelectedItem(rootShares[0]);
     } else {
       setNavPath((prev) => prev.slice(0, index + 1));
       setSelectedItem(navPath[index]);
@@ -616,11 +639,14 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
                     count: 14,
                     icon: 'folder',
                     onClick: () => {
-                      const photosShare = mockRootShares.find((s) => s.id === 'photos');
+                      const photosShare = rootShares.find((s) => s.id === 'photos' || s.name.toLowerCase() === 'photos');
                       const p2025 = photosShare?.children?.find((c) => c.name === 'Projects 2025');
                       if (photosShare && p2025) {
                         setNavPath([photosShare, p2025]);
                         setSelectedItem(p2025.children && p2025.children.length > 0 ? p2025.children[0] : p2025);
+                      } else if (photosShare) {
+                        setNavPath([photosShare]);
+                        setSelectedItem(photosShare);
                       }
                     },
                     isActive: navPath.length > 0 && navPath[navPath.length - 1].name === 'Projects 2025',
@@ -631,13 +657,13 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
                     count: 1420,
                     icon: 'folder',
                     onClick: () => {
-                      const photosShare = mockRootShares.find((s) => s.id === 'photos');
+                      const photosShare = rootShares.find((s) => s.id === 'photos' || s.name.toLowerCase() === 'photos') || rootShares[0];
                       if (photosShare) {
                         setNavPath([photosShare]);
                         setSelectedItem(photosShare);
                       }
                     },
-                    isActive: navPath.length === 1 && navPath[0].id === 'photos',
+                    isActive: navPath.length === 1 && (navPath[0].id === 'photos' || navPath[0].name.toLowerCase() === 'photos'),
                   },
                   {
                     id: 'qa-nasa2',
@@ -645,13 +671,13 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
                     count: 320,
                     icon: 'folder',
                     onClick: () => {
-                      const nasa2Share = mockRootShares.find((s) => s.id === 'nasa2');
-                      if (nasa2Share) {
-                        setNavPath([nasa2Share]);
-                        setSelectedItem(nasa2Share);
+                      const share = rootShares.find((s) => s.id === 'nasa2' || s.name.toLowerCase().includes('doc')) || rootShares[1] || rootShares[0];
+                      if (share) {
+                        setNavPath([share]);
+                        setSelectedItem(share);
                       }
                     },
-                    isActive: navPath.length === 1 && navPath[0].id === 'nasa2',
+                    isActive: navPath.length === 1 && (navPath[0].id === 'nasa2' || navPath[0].name.toLowerCase().includes('doc')),
                   },
                   {
                     id: 'qa-backup',
@@ -659,13 +685,13 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
                     count: 48,
                     icon: 'folder',
                     onClick: () => {
-                      const bkpShare = mockRootShares.find((s) => s.id === 'backup_synology');
+                      const bkpShare = rootShares.find((s) => s.id === 'backup_synology' || s.name.toLowerCase().includes('backup')) || rootShares[2] || rootShares[0];
                       if (bkpShare) {
                         setNavPath([bkpShare]);
                         setSelectedItem(bkpShare);
                       }
                     },
-                    isActive: navPath.length === 1 && navPath[0].id === 'backup_synology',
+                    isActive: navPath.length === 1 && (navPath[0].id === 'backup_synology' || navPath[0].name.toLowerCase().includes('backup')),
                   },
                   {
                     id: 'qa-appdata',
@@ -673,13 +699,13 @@ export const StorageSharesView: React.FC<StorageSharesViewProps> = ({ onBackToOv
                     count: 16,
                     icon: 'folder',
                     onClick: () => {
-                      const appdataShare = mockRootShares.find((s) => s.id === 'appdata');
+                      const appdataShare = rootShares.find((s) => s.id === 'appdata' || s.name.toLowerCase() === 'appdata') || rootShares[0];
                       if (appdataShare) {
                         setNavPath([appdataShare]);
                         setSelectedItem(appdataShare);
                       }
                     },
-                    isActive: navPath.length === 1 && navPath[0].id === 'appdata',
+                    isActive: navPath.length === 1 && (navPath[0].id === 'appdata' || navPath[0].name.toLowerCase() === 'appdata'),
                   },
                 ].map((item) => {
                   return (

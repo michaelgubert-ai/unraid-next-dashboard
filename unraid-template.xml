@@ -3,7 +3,7 @@
   <Name>Unraid-Next-Dashboard</Name>
   <Repository>ghcr.io/michaelgubert-ai/unraid-next-dashboard:latest</Repository>
   <Registry>https://github.com/michaelgubert-ai/unraid-next-dashboard/pkgs/container/unraid-next-dashboard</Registry>
-  <Network>bridge</Network>
+  <Network>host</Network>
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
@@ -17,27 +17,33 @@
     - Orange Glass Storage Hero Card with live free space breakdown and NVMe tier.
     - 3&#xD7; more compact circular telemetry widgets (CPU, RAM, Net, GPU).
     - Real-time Docker container launcher and monitoring dock.
-    - Modern folder-based storage browser.
+    - Modern folder-based storage browser reading live Unraid shares.
   </Overview>
   <Category>Status:Other Productivity: Tools: System: Dashboard:</Category>
   <WebUI>http://[IP]:[PORT:3080]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/michaelgubert-ai/unraid-next-dashboard/main/unraid-template.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/michaelgubert-ai/unraid-next-dashboard/main/prototype/public/favicon.svg</Icon>
-  <ExtraParams/>
+  <ExtraParams>--gpus all</ExtraParams>
   <PostArgs/>
   <CPUset/>
   <DateInstalled></DateInstalled>
   <DonateText/>
   <DonateLink/>
-  <Description>Modern, atmospheric React 19 dashboard prototype for Unraid with live Docker &amp; host telemetry.</Description>
+  <Description>Modern, atmospheric React 19 dashboard prototype for Unraid with live Docker, GPU &amp; host telemetry.</Description>
   
   <Config Name="WebUI Port" Target="3080" Default="3080" Mode="tcp" Description="Port to access the Unraid Next Dashboard" Type="Port" Display="always" Required="true" Mask="false">3080</Config>
   
   <Config Name="Docker Socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="ro" Description="Read-only access to Docker socket to monitor running containers and launch WebUIs" Type="Path" Display="always" Required="false" Mask="false">/var/run/docker.sock</Config>
   
-  <Config Name="Unraid System State" Target="/host/emhttp" Default="/var/local/emhttp" Mode="ro" Description="Read-only access to Unraid emhttp runtime state (var.ini, disks.ini)" Type="Path" Display="always" Required="false" Mask="false">/var/local/emhttp</Config>
+  <Config Name="Unraid System State" Target="/host/emhttp" Default="/var/local/emhttp" Mode="ro" Description="Read-only access to Unraid emhttp runtime state (var.ini, disks.ini, shares.ini)" Type="Path" Display="always" Required="false" Mask="false">/var/local/emhttp</Config>
   
   <Config Name="Host System Telemetry" Target="/host/proc" Default="/proc" Mode="ro" Description="Read-only access to host /proc for accurate CPU, memory and network metrics" Type="Path" Display="always" Required="false" Mask="false">/proc</Config>
   
-  <Config Name="Unraid Storage Shares" Target="/host/mnt/user" Default="/mnt/user" Mode="ro" Description="Read-only access to user shares for storage pool inspection" Type="Path" Display="advanced" Required="false" Mask="false">/mnt/user</Config>
+  <Config Name="Unraid Storage Shares" Target="/host/mnt/user" Default="/mnt/user" Mode="ro" Description="Read-only access to user shares for storage pool and files inspection" Type="Path" Display="always" Required="false" Mask="false">/mnt/user</Config>
+
+  <Config Name="NVIDIA Visible Devices" Target="NVIDIA_VISIBLE_DEVICES" Default="all" Mode="" Description="NVIDIA GPU visibility for telemetry (requires Unraid Nvidia Driver plugin)" Type="Variable" Display="always" Required="false" Mask="false">all</Config>
+
+  <Config Name="NVIDIA Driver Capabilities" Target="NVIDIA_DRIVER_CAPABILITIES" Default="all" Mode="" Description="NVIDIA Driver capabilities" Type="Variable" Display="always" Required="false" Mask="false">all</Config>
+
+  <Config Name="Intel iGPU / QuickSync" Target="/dev/dri" Default="/dev/dri" Mode="ro" Description="Intel QuickSync iGPU path for CPU integrated graphics" Type="Path" Display="advanced" Required="false" Mask="false">/dev/dri</Config>
 </Container>

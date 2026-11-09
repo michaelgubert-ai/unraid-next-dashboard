@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { getSystemUptime, getCpuMetrics, getMemoryMetrics, getNetworkMetrics } from './collectors/system.js';
 import { getDockerContainers, controlContainer } from './collectors/docker.js';
 import { getUnraidInfo, getUnraidDisks } from './collectors/unraid.js';
+import { getGpuMetrics } from './collectors/gpu.js';
+import { getRealShares } from './collectors/shares.js';
 import { BASE_SERVER_STATE } from './mockBaseline.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -120,6 +122,13 @@ async function buildLiveServerState() {
     isLiveSystem = true;
   }
 
+  // 8. Live GPU metrics
+  const gpu = getGpuMetrics();
+  if (gpu) {
+    state.resources.gpu = gpu;
+    if (gpu.isRealGpu) isLiveSystem = true;
+  }
+
   state.connectionStatus = 'connected';
   state.lastUpdatedTimestamp = Date.now();
   state._isLive = isLiveSystem;
@@ -165,6 +174,24 @@ const server = http.createServer(async (req, res) => {
       console.error('[API /status Error]:', err);
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: err.message, fallback: BASE_SERVER_STATE }));
+    }
+    return;
+  }
+
+  if (pathname === '/api/shares') {
+    try {
+      const shares = getRealShares();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          shares: shares || [],
+          isReal: Boolean(shares && shares.length > 0),
+        })
+      );
+    } catch (err) {
+      console.error('[API /shares Error]:', err);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
     }
     return;
   }
